@@ -1,5 +1,5 @@
 import { Router } from "express";
-// import {getUsers,getUserById,createUser,updateUser, deactivateUser,} from "./users.controller";
+import {getUsers,getUserById,createUser,updateUser, deactivateUser,} from "./users.controller";
 // import { authenticate } from "../../middlewares/auth.middleware";
 // import { authorize } from "../../middlewares/role.middleware";
 
@@ -7,10 +7,12 @@ const router = Router();
 
 // router.use(authenticate);
 //
-// router.get("/", authorize("ADMIN"), getUsers);
-// router.get("/:id", authorize("ADMIN"), getUserById);
-// router.post("/", authorize("ADMIN"), createUser);
-// router.put("/:id", authorize("ADMIN"), updateUser);
+router.get("/", getUsers);
+router.get("/:id", getUserById);
+router.post("/", createUser);
+router.put("/:id", updateUser);
+router.delete("/:id", deactivateUser);
+// feature implementation of the middleware
 // router.delete("/:id", authorize("ADMIN"), deactivateUser);
 
 export default router;
