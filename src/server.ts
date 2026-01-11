@@ -1,12 +1,16 @@
-import app from "./app";
 import dotenv from "dotenv";
-import connectDB from "./config/database/db";
+dotenv.config(); // ✅ MUST be first
 
-dotenv.config();
+import app from "./app";
+import { connectPrisma } from "./config/database/prisma";
 
 const PORT = process.env.PORT || 5000;
-// Connect MongoDB
-connectDB();
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+
+async function startServer() {
+    await connectPrisma();
+    app.listen(PORT, () => {
+        console.log(`🚀 Server running on port ${PORT}`);
+    });
+}
+
+startServer();

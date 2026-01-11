@@ -1,36 +1,48 @@
 import bcrypt from "bcrypt";
-import { UserModel } from "./users.model";
-import {CreateUserDTO, GetUsersQuery, UpdateUserDTO} from "./users.types";
+import prisma from "../../config/database/prisma";
+import {
+    CreateUserDTO,
+    GetUsersQuery,
+    UpdateUserDTO,
+} from "./users.types";
 
 export class UserService {
-    static async getUsers(query: GetUsersQuery) {
-        const { page, limit, search } = query;
 
+    /* =========================
+       GET USERS (Pagination + Search)
+    ========================= */
+    static async getUsers({ page, limit, search }: GetUsersQuery) {
         const skip = (page - 1) * limit;
 
-        // Base filter
-        const filter: any = {
+        const where: any = {
             is_active: true,
+            ...(search && {
+                OR: [
+                    { username: { contains: search, mode: "insensitive" } },
+                    { email: { contains: search, mode: "insensitive" } },
+                    { full_name: { contains: search, mode: "insensitive" } },
+                ],
+            }),
         };
 
-        // Search condition
-        if (search) {
-            filter.$or = [
-                { username: { $regex: search, $options: "i" } },
-                { email: { $regex: search, $options: "i" } },
-                { full_name: { $regex: search, $options: "i" } },
-            ];
-        }
-
-        // Query data + count in parallel
         const [users, totalRecords] = await Promise.all([
-            UserModel.find(filter)
-                .select("-password_hash")
-                .skip(skip)
-                .limit(limit)
-                .sort({ created_at: -1 }),
-
-            UserModel.countDocuments(filter),
+            prisma.user.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { created_at: "desc" },
+                select: {
+                    id: true,
+                    shopId: true,
+                    username: true,
+                    email: true,
+                    full_name: true,
+                    phone: true,
+                    is_active: true,
+                    created_at: true,
+                },
+            }),
+            prisma.user.count({ where }),
         ]);
 
         return {
@@ -44,34 +56,78 @@ export class UserService {
         };
     }
 
-    static async getUserById(id: string | string[]) {
-
-        return UserModel.findById(id).select("-password_hash");
-    }
-
-    static async createUser(data: CreateUserDTO) {
-        const hashedPassword = await bcrypt.hash(data.password, 10);
-        return UserModel.create({
-            shopId: data.shopId,
-            username: data.username,
-            email: data.email,
-            password_hash: hashedPassword,
-            full_name: data.full_name,
-            phone: data.phone,
+    /* =========================
+       GET USER BY ID
+    ========================= */
+    static async getUserById(id: string) {
+        return prisma.user.findUnique({
+            where: { id },
+            select: {
+                id: true,
+                shopId: true,
+                username: true,
+                email: true,
+                full_name: true,
+                phone: true,
+                is_active: true,
+                created_at: true,
+            },
         });
     }
 
-    static async updateUser(id: string | string[], data: UpdateUserDTO) {
-        return UserModel.findByIdAndUpdate(id, data, { new: true }).select(
-            "-password_hash"
-        );
+    /* =========================
+       CREATE USER
+    ========================= */
+    static async createUser(data: CreateUserDTO) {
+        const hashedPassword = await bcrypt.hash(data.password, 10);
+
+        return prisma.user.create({
+            data: {
+                shopId: data.shopId,
+                username: data.username,
+                email: data.email,
+                password_hash: hashedPassword,
+                full_name: data.full_name,
+                phone: data.phone,
+            },
+            select: {
+                id: true,
+                shopId: true,
+                username: true,
+                email: true,
+                full_name: true,
+                phone: true,
+                created_at: true,
+            },
+        });
     }
 
-    static async deactivateUser(id: string | string[]) {
-        return UserModel.findByIdAndUpdate(
-            id,
-            { is_active: false },
-            { new: true }
-        );
+    /* =========================
+       UPDATE USER
+    ========================= */
+    static async updateUser(id: string, data: UpdateUserDTO) {
+        return prisma.user.update({
+            where: { id },
+            data,
+            select: {
+                id: true,
+                shopId: true,
+                username: true,
+                email: true,
+                full_name: true,
+                phone: true,
+                is_active: true,
+            },
+        });
+    }
+
+    /* =========================
+       SOFT DELETE (Deactivate)
+    ========================= */
+    static async deactivateUser(id: string) {
+        return prisma.user.update({
+            where: { id },
+            data: { is_active: false },
+        });
     }
 }
