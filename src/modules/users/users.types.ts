@@ -26,3 +26,10 @@ export interface UpdateUserDTO {
     phone?: string;
     is_active?: boolean;
 }
+
+export interface GetUsersQuery {
+    page: number;
+    limit: number;
+    search?: string;
+}
+

@@ -1,14 +1,28 @@
 import { Request, Response, NextFunction } from "express";
 import { UserService } from "./users.service";
 
-export const getUsers = async (req: Request,res: Response,next: NextFunction) => {
+export const getUsers = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
     try {
-        const users = await UserService.getAllUsers();
-        res.json(users);
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || 10;
+        const search = (req.query.search as string) || "";
+
+        const result = await UserService.getUsers({
+            page,
+            limit,
+            search,
+        });
+
+        res.json(result);
     } catch (err) {
         next(err);
     }
 };
+
 
 export const getUserById = async (req: Request,res: Response,next: NextFunction) => {
     try {

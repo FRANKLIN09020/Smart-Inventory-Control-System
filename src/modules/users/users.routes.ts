@@ -7,11 +7,12 @@ const router = Router();
 
 // router.use(authenticate);
 //
-router.get("/", getUsers);
-router.get("/:id", getUserById);
-router.post("/", createUser);
-router.put("/:id", updateUser);
-router.delete("/:id", deactivateUser);
+router.get("/getUsers", getUsers);
+router.post("/insertUser", createUser);
+router.get("/getUserById/:id", getUserById);
+router.put("/updateUser/:id", updateUser);
+router.delete("/deleteUser/:id", deactivateUser);
+
 // feature implementation of the middleware
 // router.delete("/:id", authorize("ADMIN"), deactivateUser);
 
